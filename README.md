@@ -6,8 +6,9 @@ This is the PyTorch implementation of the paper that we submitted for under revi
 
 >Anonymous Author(s)
 
-## Note on datasets 
+## Usage
 Due to the large size of datasets *Tmall*, *Amazon* and *ML-10M*, we have compressed them into zip files. Please unzip them before running the model on these datasets. For *Gowalla* and *Yelp*, keeping the current directory structure is fine.
+Also you need to create the `save_log/` and the `log_csv/` directories.
 
 ## Environment Requirement
 
