@@ -10,9 +10,8 @@ from tqdm import tqdm
 from log import Logger,model_info
 import logging
 from datetime import datetime
-dataset= 'yelp'
+dataset= 'amazon'
 args=parse_args(dataset=dataset)
-args.epoch=1
 #args.use_log=False
 seed=512
 graph=convert_number(args.Lgraph)
