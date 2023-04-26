@@ -200,7 +200,7 @@ for epoch in range(epoch_no):
         if args.use_log == True:
             log.set_log(format=logging.Formatter())
             log.info(score_info)
-            log.set_log(format=logging.Formatter('[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))  # 有时间戳
+            log.set_log(format=logging.Formatter('[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))  
         recall_20_x.append(epoch)
         recall_20_y.append(all_recall_20/batch_no)
         ndcg_20_y.append(all_ndcg_20/batch_no)
@@ -221,7 +221,7 @@ for epoch in range(epoch_no):
         print('-----------------------------------------------------')
         print('Early stop is triggered at {} epochs.'.format(epoch))
         if args.use_log == True:
-            log.set_log(format=logging.Formatter())  # 取消时间戳
+            log.set_log(format=logging.Formatter()) 
             log.info('-' * 48+'result'+'-'*48)
             log.info('Early stop is triggered at '+str(epoch)+ ' epochs.')
         break
@@ -239,7 +239,7 @@ if args.use_log==True:
     if not early_stop:
         log.set_log(format=logging.Formatter())
         log.info('-' * 48+'result'+'-'*47)
-    log.set_log(format=logging.Formatter('[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))  # 设置时间戳
+    log.set_log(format=logging.Formatter('[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
     log.info('Best Recall & NDCG')
     log.set_log(format=logging.Formatter())
     log.info('Best epoch is '+str(best_epoch))
