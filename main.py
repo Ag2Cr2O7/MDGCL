@@ -7,13 +7,12 @@ from utils import metrics, scipy_sparse_mat_to_torch_sparse_tensor,set_seed,conv
 import pandas as pd
 from myparser import parse_args
 from tqdm import tqdm
-from time import time
 from log import Logger,model_info
 import logging
 from datetime import datetime
-
 dataset= 'yelp'
 args=parse_args(dataset=dataset)
+args.epoch=1
 #args.use_log=False
 seed=512
 graph=convert_number(args.Lgraph)
@@ -245,7 +244,7 @@ if args.use_log==True:
     log.info('Best epoch is '+str(best_epoch))
     log.info('Recall@20:'+str(best_recall1)+' Ndcg@20:'+str(best_ndcg1)+' Recall@40:'+str(best_recall2)+' Ndcg@40:'+str(best_ndcg2))
     print('Log file:',log_path)
-print('Rec metrics:','log/' + dataset + runname + '.csv')
+    print('Rec metrics:','save_log/' + dataset + '/' + runname +'.csv')
 
 metric = pd.DataFrame({
     'epoch':recall_20_x,
@@ -254,4 +253,6 @@ metric = pd.DataFrame({
     'recall@40':recall_40_y,
     'ndcg@40':ndcg_40_y
 })
-metric.to_csv('log_csv/' + dataset + runname + '.csv')
+if args.use_log==True:
+    csv_path = 'save_log/' + dataset + '/' + runname + '.csv'
+    metric.to_csv(csv_path)
