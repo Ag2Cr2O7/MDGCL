@@ -62,7 +62,7 @@ class MDGCL(nn.Module):
         # test
         if test==True:
             preds = self.E_u[uids] @ self.E_i.T
-            mask = self.train_csr[uids.cpu().numpy()].toarray() # (256,24734)
+            mask = self.train_csr[uids.cpu().numpy()].toarray() # (batch,items)
             mask = torch.Tensor(mask).to(device)
             preds = preds * (1-mask)
             predictions = preds.argsort(descending=True)
@@ -85,8 +85,8 @@ class MDGCL(nn.Module):
             self.Z_i_list[layer] = self.act(zi)
             if layer>=2:
                 for j in range(1,layer):
-                    self.Z_u_list[layer] += self.Z_u_list[j]  # (29601,32)
-                    self.Z_i_list[layer] += self.Z_i_list[j]  # (24734,32)
+                    self.Z_u_list[layer] += self.Z_u_list[j]  # (users,dim)
+                    self.Z_i_list[layer] += self.Z_i_list[j]  # (items,dim)
             zus = spmm(self.adj_norm, self.S_i_list[layer - 1], self.device)
             zis = spmm(self.adj_norm.transpose(0, 1), self.S_u_list[layer - 1], self.device)
             self.S_zu_list[layer] = self.act(zus)
