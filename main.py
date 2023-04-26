@@ -162,7 +162,7 @@ for epoch in range(epoch_no):
     loss_list.append(epoch_loss)
     loss_r_list.append(epoch_loss_r)
     loss_s_list.append(epoch_loss_s)
-    print('Epoch:{} Loss{:.4f} Lrec:{:.4f} LGraph:{:.4f} LHyper:{:.4f} '.format(epoch,epoch_loss,epoch_loss_r,epoch_loss_n,epoch_loss_s))
+    print('Epoch:{} Loss:{:.4f} Lrec:{:.4f} LGraph:{:.4f} LHyper:{:.4f} '.format(epoch,epoch_loss,epoch_loss_r,epoch_loss_n,epoch_loss_s))
     # generate log
     strepoch=str(epoch)
     strepoch=' '+strepoch if len(strepoch)<2 else strepoch
