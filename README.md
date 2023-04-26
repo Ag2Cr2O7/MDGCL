@@ -17,6 +17,7 @@ The code runs well under python 3.8.0. The required packages are as follows:
 - scipy == 1.7.0
 - pandas == 1.1.5
 - pynvml == 11.5.0
+- tqdm == 4.62.3
 
 ## How to run the codes
 * Tmall
