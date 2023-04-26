@@ -111,7 +111,7 @@ def pkl2txt(path='',seg='\t'):
 def coltxt2pkl(path,sep='\t'):
     #train
     traindata = pd.read_table(path + 'train.txt', header=None, sep=sep)
-    train_user = traindata.values[:, 0]  # 第0列
+    train_user = traindata.values[:, 0] 
     train_item = traindata.values[:, 1]
     row = np.array(train_user)
     col = np.array(train_item)
