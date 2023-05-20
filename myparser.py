@@ -33,7 +33,7 @@ def parse_args(dataset='yelp'):
         parser.add_argument('--Lgraph', default=1e-2, type=float, help='weight of Lgraph')
         parser.add_argument('--t', default=0.3, type=float, help='tao of Ls')
         parser.add_argument('--Lhyper', default=1e-4, type=float, help='weight of Lhyper')
-        parser.add_argument('--temp', default=0.5, type=float, help='tao\' of Lh')
+        parser.add_argument('--temp', default=1, type=float, help='tao\' of Lh')
         parser.add_argument('--earlystop', default=3, type=int, help='earlystop')
         parser.add_argument('--use_log', default=True, type=bool, help='log')
 
@@ -50,7 +50,7 @@ def parse_args(dataset='yelp'):
         parser.add_argument('--cuda', default='0', type=str, help='the gpu to use')
         parser.add_argument('--Lgraph', default=1e-2, type=float, help='weight of Lgraph')
         parser.add_argument('--t', default=0.4, type=float, help='tao of Ls')
-        parser.add_argument('--Lhyper', default=1e-4, type=float, help='weight of Lhyper')
+        parser.add_argument('--Lhyper', default=1e-5, type=float, help='weight of Lhyper')
         parser.add_argument('--temp', default=1, type=float, help='tao\' of Lh')
         parser.add_argument('--earlystop', default=3, type=int, help='earlystop')
         parser.add_argument('--use_log', default=True, type=bool, help='log')
