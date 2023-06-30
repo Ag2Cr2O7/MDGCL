@@ -6,7 +6,6 @@ import random
 import torch
 from time import time
 import logging
-from termcolor import colored
 from pynvml import *
 class Logger(object):
     """`Logger` is a simple encapsulation of python logger.
