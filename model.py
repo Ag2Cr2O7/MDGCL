@@ -17,44 +17,34 @@ class MDGCL(nn.Module):
         self.train_csr = train_csr
         self.adj_norm = adj_norm
         self.l = l
-        self.E_u_list = [None] * (l+1)
-        self.E_i_list = [None] * (l+1)
+        self.E_u_list,self.E_i_list = [None]*(l+1),[None]*(l+1)
         self.E_u_list[0] = self.E_u_0
         self.E_i_list[0] = self.E_i_0
-        self.Z_u_list = [None] * (l+1)
-        self.Z_i_list = [None] * (l+1)
+        self.Z_u_list,self.Z_i_list = [None]*(l+1),[None]*(l+1)
         self.temp = temp 
         self.dropout = dropout 
         self.act = nn.LeakyReLU(0.5) 
         self.batch_user = batch_user 
         self.Ws = nn.ModuleList([W_contrastive(d) for i in range(l)])
         # self.Ws1 = W_contrastive(d)
-        self.E_u = None
-        self.E_i = None
-        self.S_u=None
-        self.S_i=None
+        self.E_u,self.E_i = None,None
+        self.S_u,self.S_i= None,None
         self.c = 1
         self.Lhyper = Lhyper
         self.zero=torch.tensor([0]).to(device)
         self.manifold = Hyperboloid()
         self.fill_zero_u = torch.zeros(self.E_u_0.shape[0], 1)
         self.fill_zero_i = torch.zeros(self.E_i_0.shape[0], 1)
-        self.E_u_00 = self.manifold.logmap0(self.manifold.expmap0(torch.cat((self.fill_zero_u, self.E_u_0), dim=1), self.c), self.c)
-        self.E_i_00 = self.manifold.logmap0(self.manifold.expmap0(torch.cat((self.fill_zero_i, self.E_i_0), dim=1), self.c), self.c)
-        self.S_u_0 = nn.parameter.Parameter(self.E_u_00)
-        self.S_i_0 = nn.parameter.Parameter(self.E_i_00)
-        self.S_u_list = [None] * (l + 1)
-        self.S_i_list = [None] * (l + 1)
-        self.S_zu_list = [None] * (l + 1)
-        self.S_zi_list = [None] * (l + 1)
-        self.S_u = None
-        self.S_i = None
+        self.su = self.manifold.expmap0(torch.cat((self.fill_zero_u, self.E_u_0), dim=1), self.c)
+        self.si = self.manifold.expmap0(torch.cat((self.fill_zero_i, self.E_i_0), dim=1), self.c)
+        self.S_u_0 = nn.parameter.Parameter(self.manifold.logmap0(self.su,self.c))
+        self.S_i_0 = nn.parameter.Parameter(self.manifold.logmap0(self.si,self.c))
+        self.S_u_list,self.S_i_list = [None]*(l+1),[None]*(l+1)
+        self.S_zu_list,self.S_zi_list =[None]*(l+1),[None]*(l+1)
+        self.S_u,self.S_i = None,None
         self.S_u_list[0] = self.S_u_0
         self.S_i_list[0] = self.S_i_0
-        self.E_uu_list, self.E_ii_list = [None] * (l + 1), [None] * (l + 1)
-        self.E_uu_list[0], self.E_ii_list[0] = self.E_u_0, self.E_i_0
-        self.Z_uu_list, self.Z_ii_list = [None] * (l + 1), [None] * (l + 1)
-        self.E_uu, self.E_ii = None, None
+        self.Z_uu_list, self.Z_ii_list = [None]*(l+1),[None]*(l+1)
 
 
     def forward(self, uids, iids, pos, neg, test=False):
@@ -77,39 +67,26 @@ class MDGCL(nn.Module):
             return loss, loss_r, loss_hyper, loss_graph
 
     def GraphLayer(self, l):
-        device=self.device
         for layer in range(1, l + 1):  # LightGCN消息传播
-            zu = spmm(edge_drop(self.adj_norm, self.dropout), self.E_i_list[layer - 1], self.device)
-            zi = spmm(edge_drop(self.adj_norm, self.dropout).transpose(0, 1), self.E_u_list[layer - 1], self.device)
+            zu = spmm(edge_drop(self.adj_norm, self.dropout),self.E_i_list[layer-1], self.device)
+            zi = spmm(edge_drop(self.adj_norm, self.dropout).transpose(0, 1), self.E_u_list[layer-1], self.device)
             self.Z_u_list[layer] = self.act(zu)
             self.Z_i_list[layer] = self.act(zi)
-            if layer>=2:
-                for j in range(1,layer):
-                    self.Z_u_list[layer] += self.Z_u_list[j]  # (users,dim)
-                    self.Z_i_list[layer] += self.Z_i_list[j]  # (items,dim)
+            self.DCs(self.Z_u_list, self.Z_i_list[layer], layer)
             zus = spmm(self.adj_norm, self.S_i_list[layer - 1], self.device)
-            zis = spmm(self.adj_norm.transpose(0, 1), self.S_u_list[layer - 1], self.device)
+            zis = spmm(self.adj_norm.transpose(0, 1), self.S_u_list[layer-1], self.device)
             self.S_zu_list[layer] = self.act(zus)
             self.S_zi_list[layer] = self.act(zis)
-            if layer >= 2:
-                for j in range(1, layer):
-                    self.S_zu_list[layer] += self.S_zu_list[j]  # (29601,32)
-                    self.S_zi_list[layer] += self.S_zi_list[j]  # (24734,32)
-            zuu = spmm(edge_drop(self.adj_norm, self.dropout), self.E_ii_list[layer - 1], self.device)
-            zii = spmm(edge_drop(self.adj_norm, self.dropout).transpose(0, 1), self.E_uu_list[layer - 1],
-                       self.device)
+            self.DCs(self.S_zu_list, self.S_zi_list, layer)
+            zuu = spmm(edge_drop(self.adj_norm, self.dropout), self.E_i_list[layer - 1], self.device)
+            zii = spmm(edge_drop(self.adj_norm, self.dropout).transpose(0, 1), self.E_u_list[layer-1],self.device)
             self.Z_uu_list[layer] = self.act(zuu)
             self.Z_ii_list[layer] = self.act(zii)
-            if layer >= 2:
-                for j in range(1, layer):
-                    self.Z_uu_list[layer] += self.Z_uu_list[j]  # (users,dim)
-                    self.Z_ii_list[layer] += self.Z_ii_list[j]  # (items,dim)
-            self.E_u_list[layer] = self.Z_u_list[layer] + self.E_u_list[layer - 1]
-            self.E_i_list[layer] = self.Z_i_list[layer] + self.E_i_list[layer - 1]
-            self.S_u_list[layer] = self.S_zu_list[layer] + self.S_u_list[layer - 1]
-            self.S_i_list[layer] = self.S_zi_list[layer] + self.S_i_list[layer - 1]
-            self.E_uu_list[layer] = self.Z_uu_list[layer] + self.E_uu_list[layer - 1]
-            self.E_ii_list[layer] = self.Z_ii_list[layer] + self.E_ii_list[layer - 1]
+            self.DCs(self.Z_uu_list, self.Z_ii_list[layer], layer)
+            self.E_u_list[layer] = self.Z_u_list[layer]+self.E_u_list[layer-1]
+            self.E_i_list[layer] = self.Z_i_list[layer]+self.E_i_list[layer-1]
+            self.S_u_list[layer] = self.S_zu_list[layer] + self.S_u_list[layer-1]
+            self.S_i_list[layer] = self.S_zi_list[layer] + self.S_i_list[layer-1]
         self.E_u = sum(self.E_u_list)  # (users,dim)
         self.E_i = sum(self.E_i_list)
 
@@ -158,7 +135,7 @@ class MDGCL(nn.Module):
             gnn_u = nn.functional.normalize(gnn_u, p=2, dim=1)
             hyper_u=self.manifold.expmap0(self.S_zu_list[l][uids],self.c)
             hyper_u = nn.functional.normalize(hyper_u, p=2, dim=1)
-            hyper_u = self.Ws[l - 1](hyper_u)
+            hyper_u = self.Ws[l-1](hyper_u)
             pos_score = torch.exp((gnn_u * hyper_u).sum(1) / self.temp)
             neg_score = torch.exp(gnn_u @ hyper_u.T / self.temp).sum(1)
             loss_s_u = (-1 * torch.log(pos_score / (neg_score + 1e-8) + 1e-8)).sum()
@@ -190,6 +167,12 @@ class MDGCL(nn.Module):
             gnn_ii = nn.functional.normalize(self.Z_ii_list[l][iids], p=2, dim=1)
             loss_zq = loss_zq + self.Lss(gnn_u, gnn_uu, gnn_i, gnn_ii,self.args.t)
         return loss_zq
+
+    def DCs(self,uemb,iemb,layer):
+        if layer >= 2:
+            for j in range(1, layer):
+                uemb[layer] += uemb[j]  # (29601,32)
+                iemb[layer] += iemb[j]  # (24734,32)
 
 class W_contrastive(nn.Module):
     def __init__(self,d):
